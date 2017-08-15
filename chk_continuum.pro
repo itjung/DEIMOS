@@ -1,5 +1,28 @@
 pro chk_continuum,obj_id,jmag=jmag;
 
+;+NAME:
+;	gen_obj_list
+;
+; PURPOSE:
+;   Generate Slit object catalog from DEIMOS pipeline outputs
+;
+; INPUTS:
+;	spSlit.MASKNAME.###B(R).fits(.gz)
+;   MASKNAME.bintabs.fits
+;	
+; OUTPUTS:
+;  	slit_objs_MASKNAEM.txt
+;		parameters: SLIT #, ObjectID, Chip#, N_exposrue, Object RA & dec, Slit RA & dec
+;
+; KEYWORD PARAMETERS:
+;   No keyword.
+;
+; EXAMPLE:
+;	IDL> 
+;
+; MODIFICATION HISTORY:
+;	Written by Intae Jung @ Aug 2017
+;-
 
 	restore,obj_id+'_1d.idl'
 	s1d = s1d*(1d-18)	;in erg s-1 cm-2 A-1

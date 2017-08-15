@@ -1,7 +1,30 @@
 pro gen_obj_list
 
-	chk_gz = file_test('spSlit*fits.gz') 
+;+NAME:
+;	gen_obj_list
+;
+; PURPOSE:
+;   Generate Slit object catalog from DEIMOS pipeline outputs
+;
+; INPUTS:
+;	spSlit.MASKNAME.###B(R).fits(.gz)
+;   MASKNAME.bintabs.fits
+;	
+; OUTPUTS:
+;  	slit_objs_MASKNAEM.txt
+;		parameters: SLIT #, ObjectID, Chip#, N_exposrue, Object RA & dec, Slit RA & dec
+;
+; KEYWORD PARAMETERS:
+;   No keyword.
+;
+; EXAMPLE:
+;	IDL> 
+;
+; MODIFICATION HISTORY:
+;	Written by Intae Jung @ Aug 2017
+;-
 
+	chk_gz = file_test('spSlit*fits.gz')
 	binfile = file_search('*bintabs.fits')
 	bin_obj = mrdfits(binfile,1) 
 	bin_slit = mrdfits(binfile,3) 

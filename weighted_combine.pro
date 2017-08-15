@@ -1,12 +1,39 @@
-;	consider weights (Kriek et al. 2015)
-;	weight = the maximum flux of the best-fit Gaussian from guide stars
 pro weighted_combine,obj_id
 
+;+NAME:
+;	weighted_combine
+;
+; PURPOSE:
+;	Combine all science(&noise) frames by measuring weighted-mean, considering a dithering pattern  
+;
+; INPUTS:
+;	./OBJECTNAME/Bf##_sky.fits
+;	./OBJECTNAME/BN##.fits
+;   weight.idl
+;	
+; OUTPUTS:
+;	./OBJECTNAME/B_2dspec.fits
+;	./OBJECTNAME/BN_2dspec.fits 	
+;
+; KEYWORD PARAMETERS:
+;   No keyword.
+;
+; EXAMPLE:
+;	IDL> weighted_combine,'Object ID'
+;
+; MEMO:
+;	- Each 2D frame is rebinned with 50 sub-bins per each pixel 
+;		to accurately shift the frame to match object's spatial position in y-direction
+;
+; MODIFICATION HISTORY:
+;	Written by Intae Jung @ Aug 2017
+;-
+
+
 	restore,'weight.idl'
-;	w = weights
-;	ycen = dither pattern
 	dither = sort(ycen(0:2))	; 0 - bottom, 1 - middle, 2 - top
 	dither = [dither,dither,dither,dither,dither,dither,dither,dither,dither]
+;	obtained dithering patterns for all frames
 
 	path  = './'+obj_id+'/'
 	print,'>>>>>>'+path+'<<<<<<'
@@ -79,11 +106,8 @@ pro weighted_combine,obj_id
 	B_com = reform(B_com(*,gap:gap+Bny-1))
 	R_com = reform(R_com(*,gap:gap+Bny-1))
 
-	spawn,'rm -rf '+path+'B_2dspec.fits'
-	spawn,'rm -rf '+path+'R_2dspec.fits'
-
-	mwrfits,B_com,path+'B_2dspec.fits'
-	mwrfits,R_com,path+'R_2dspec.fits'
+	mwrfits,B_com,path+'B_2dspec.fits',/create
+	mwrfits,R_com,path+'R_2dspec.fits',/create
 
 	BN_com = sqrt(BN_com)/sqrt(total(w^2.))
 	RN_com = sqrt(RN_com)/sqrt(total(w^2.))
@@ -93,10 +117,7 @@ pro weighted_combine,obj_id
 	BN_com = reform(BN_com(*,gap:gap+Bny-1))
 	RN_com = reform(RN_com(*,gap:gap+Bny-1))
 
-	spawn,'rm -rf '+path+'BN_2dspec.fits'
-	spawn,'rm -rf '+path+'RN_2dspec.fits'
-
-	mwrfits,BN_com,path+'BN_2dspec.fits'
-	mwrfits,RN_com,path+'RN_2dspec.fits'
+	mwrfits,BN_com,path+'BN_2dspec.fits',/create
+	mwrfits,RN_com,path+'RN_2dspec.fits',/create
 
 end

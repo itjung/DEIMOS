@@ -1,5 +1,29 @@
-;	extract individual science frames
 pro ext_frame,obj_id
+
+;+NAME:
+;	ext_frame
+;
+; PURPOSE:
+;   Extract individual science frames from spSlit* files 
+;
+; INPUTS:
+;	spSlit.MASKNAME.###B(R).fits(.gz)
+;   MASKNAME.bintabs.fits
+;	MASKNAME.plan
+;	slit_objs_MASKNAME.txt
+;	
+; OUTPUTS:
+;  	./OBJECTNAME/BS_##.fits
+;
+; KEYWORD PARAMETERS:
+;   No keyword.
+;
+; EXAMPLE:
+;	IDL> 
+;
+; MODIFICATION HISTORY:
+;	Written by Intae Jung @ Aug 2017
+;-
 
 	chk_gz = file_test('spSlit*fits.gz')
 	GA = [1.224d0,1.181d0,1.266d0,1.209d0,1.181d0,1.171d0,1.207d0,1.218d0]
@@ -26,7 +50,6 @@ pro ext_frame,obj_id
 	
 	spawn,'mkdir '+obj_id
 	path  = './'+obj_id+'/'
-	spawn,'rm -rf '+path+'*'
 	print,'>>>>>>'+path+'<<<<<<'
 	k=1
 	for i=1,n_ext,2 do begin
@@ -36,8 +59,8 @@ pro ext_frame,obj_id
 		Rflux = SR.flux
 		Bout = path+'BS_'+string(k,format='(I02)')+'.fits'
 		Rout = path+'RS_'+string(k,format='(I02)')+'.fits'
-		mwrfits,Bflux,Bout,/silent
-		mwrfits,Rflux,Rout,/silent
+		mwrfits,Bflux,Bout,/silent,/create
+		mwrfits,Rflux,Rout,/silent,/create
 		K = K+1
 	endfor
 

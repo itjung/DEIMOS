@@ -1,5 +1,30 @@
 pro cr_clean,obj_id,sigclip=sigclip
 
+;+NAME:
+;	cr_clean
+;
+; PURPOSE:
+;   Cosmic-Ray rejection with the public IDL procedure, 'L.A.Cosmic (by Pieter G. van Dokkum)'
+;
+; INPUTS:
+;	./OBJECTNAME/B(R)S_##.fits
+;	spSlit.MASKNAME.###B(R).fits(.gz)
+;   MASKNAME.bintabs.fits
+;	
+; OUTPUTS:
+; 	./OBJECTNAME/BS_##-out.fits 	
+;	./OBJECTNAME/BS_##-mask.fits
+;
+; KEYWORD PARAMETERS:
+;   sigclip: a keyword set for la_cosmic.pro
+;
+; EXAMPLE:
+;	IDL> cr_clean,'object ID',sigclip=sigclip
+;
+; MODIFICATION HISTORY:
+;	Written by Intae Jung @ Aug 2017
+;-
+
 	if ~keyword_set(sigclip) then sigclip = 4.5
 	chk_gz = file_test('spSlit*fits.gz')
 	sltmak = strsplit(file_search('*.plan'),'.',/extract)

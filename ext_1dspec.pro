@@ -1,10 +1,37 @@
-;	construct 1D spectra
-; 
-;	1) Take science position from slitmask
-;   2) Extract 1D spectrum within 9 pixels (0".1185/pixel * 9pixel = 1.0665 ~ Seeing)
-
 pro ext_1dspec,obj_id,star=star
 
+;+NAME:
+;	ext_1dspec
+;
+; PURPOSE:
+;   Generate Slit object catalog from DEIMOS pipeline outputs
+;
+; INPUTS:
+;	./OBJECTNAME/B_2dspec.fits
+;	./OBJECTNAME/BN_2dspec.fits
+;   MASKNAME.bintabs.fits
+;	
+; OUTPUTS:
+;  	OBJECTNAME_1d.idl
+;
+; KEYWORD PARAMETERS:
+;   star: if this keyword set, a procedure runs in the mode for extract 1D spectrum of guide stars
+;		  	if not, for high-z galaxies
+;
+; EXAMPLE:
+;	IDL> ext_1dspec,'object ID'
+;	IDL> ext_1dspec,'star_14984',/star
+;
+; MEMO:
+;	- Calculate y-direction offset of a science object to its slit-center
+;	- 1D spectrum is obtained by optimal extraction (Horne 1986) 
+;	- Continuum level near LyA obtained from MCMC SED fitting results
+;	- A sigma value used for optimal extraction is taken from the seeing 
+;		measured from continuum sources (e.g. guide stars)
+;
+; MODIFICATION HISTORY:
+;	Written by Intae Jung @ Aug 2017
+;-
 
 	chk_gz = file_test('spSlit*fits.gz')
 	sltmak = strsplit(file_search('*.plan'),'.',/extract)
@@ -18,19 +45,19 @@ pro ext_1dspec,obj_id,star=star
 	B_add = chipno(0)-1
 	R_add = chipno(0)-1
 
-	mskfile = sltmak(0)+'_sltmsk.fits'
-	readcol,'obj_pos_in_slit_'+sltmak(0)+'.txt',dum,obj_list,flag_list,format='(i,a,i)',/silent
-	ra_obj = RA_objs(tmp)
-	dec_obj = dec_objs(tmp)
-	ra_slit = RA_slits(tmp)
-	dec_slit = dec_slits(tmp)
-	gcirc,2,RA_obj,dec_obj,RA_slit,dec_slit,dis ;dis in arcsec
-	yoffset=dis/0.1185 ; yoffset in pixels (y-axis)
-	flag = flag_list(where(obj_list eq obj_id))
-	if flag lt 0 then yoffset = yoffset*(-1)
+	if ~keyword_set(star) then begin
+		mskfile = sltmak(0)+'_sltmsk.fits'
+		readcol,'obj_pos_in_slit_'+sltmak(0)+'.txt',dum,obj_list,flag_list,format='(i,a,i)',/silent
+		ra_obj = RA_objs(tmp)
+		dec_obj = dec_objs(tmp)
+		ra_slit = RA_slits(tmp)
+		dec_slit = dec_slits(tmp)
+		gcirc,2,RA_obj,dec_obj,RA_slit,dec_slit,dis ;dis in arcsec
+		yoffset=dis/0.1185 ; yoffset in pixels (y-axis)
+		flag = flag_list(where(obj_list eq obj_id))
+		if flag lt 0 then yoffset = yoffset*(-1)
+	endif 
 	
-
-;	[0] READ wavelength 
 	print,'>>> BUILD 1D SPECTRA of '+obj_id,num
 
 	s2d_B = mrdfits(obj_id+'/B_2dspec.fits',0,/silent)	
@@ -53,19 +80,18 @@ pro ext_1dspec,obj_id,star=star
 	endelse
 	lambda2d_R = lambda_eval(calib_R)
 
+
 	restore,'response.idl'
 
 	ny = n_elements(s2d_B(0,*))
-	ycen = round((ny-1)/2.+yoffset)
-;	ycen = round((n_elements(s2d_B(0,*))-1)/2.+yoffset)
+	if ~keyword_set(star) then ycen = round((ny-1)/2.+yoffset) else ycen = round((ny-1.)/2.)
 	print,'>> ycen =',ycen
-	print,'RA_obj,dec_obj,RA_slit,dec_slit'
-	print,RA_obj,dec_obj,RA_slit,dec_slit,dis,yoffset
 
 	nxB = n_elements(s2d_B(*,0))
 	nxR = n_elements(s2d_R(*,0))
 	nx = nxB+nxR
-	npx = 9 ;
+	npx = 9;FIX(sigma*2*1.5/2.)+1;9 ;
+	print,npx
 
 	exc1 = indgen(ycen-fix(npx/2.))
 	exc2 = indgen(n_elements(s2d_B(0,*))-1-ycen+fix(npx/2.))+ycen+fix(npx/2.)+1
@@ -96,7 +122,6 @@ pro ext_1dspec,obj_id,star=star
 	lambda2d_ex = [lambda2d_B,lambda2d_R]
 
 	ycen_ex = fix(npx/2.)
-;	lambda0 = reform(lambda2d_B(*,ycen))  ; lambda at the center of a science object
 	lambda0_ex = reform(lambda2d_ex(*,ycen_ex)) ; lambda at the center of a science object
 	nrows = n_elements(lambda2d_ex(0,*))
 	npix = n_elements(lambda0_ex)
@@ -116,8 +141,7 @@ pro ext_1dspec,obj_id,star=star
 	for i=0l,nx-1 do sky_1d(i) = total(sky_2d(i,*))
 	sky_1d = sky_1d - median(sky_1d)
 
-	sigma = 4.31392d0 ; sigma in pixels for 2014Feb20 ........check!!!
-;	sigma = 2.5d0 ; sigma in pixels for 2014Feb20 ........check!!!
+;	sigma = 4.31392d0 ; sigma in pixels for 2014Feb20 ........check!!!
 
 	yy = indgen(npx) ; for 9pixel-extraction for 1D spectrum
 	gprofile = (1.d0/(sigma*sqrt(2.d0*!dpi)))*exp((-1.d0)*((yy-fix(npx/2.))^2.d0)/(2.d0*sigma^2.d0))

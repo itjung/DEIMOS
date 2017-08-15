@@ -1,5 +1,3 @@
-;	A' = A2 - ((A1+A3)/2)
-;	consider weights & calculate noise (Kriek et al. 2015)
 function noise1,SF1,SF2,G,R
 	noise = sqrt(G*SF1+G*SF2+2.d0*R^2.d0)/G
 	return,noise
@@ -11,6 +9,37 @@ function noise2,SF0,SF1,SF2,G,R
 end
 
 pro sky_reduction,obj_id
+
+;+NAME:
+;	sky_reduction
+;
+; PURPOSE:
+;   Reduce sky emission with adjacent science frames as A2' = A2 - (A1+A3)/2
+;	Create noise maps 
+;
+; INPUTS:
+;	./OBJECTNAME/B(R)S_##-out.fits
+;   MASKNAME.bintabs.fits
+;	MASKNAME.plan
+;	slit_objs_MASKNAME.txt
+;	
+; OUTPUTS:
+;  	./OBJECTNAME/B(R)f##_sky.fits
+;  	./OBJECTNAME/B(R)N##.fits
+;
+; KEYWORD PARAMETERS:
+;   No keyword.
+;
+; EXAMPLE:
+;	IDL> sky_reduction,'object ID'
+;
+; MEMO:
+;   READOUT & GAIN parameters are from 
+;		https://www2.keck.hawaii.edu/inst/deimos/deimos_detector_data.html	
+;
+; MODIFICATION HISTORY:
+;	Written by Intae Jung @ Aug 2017
+;-
 
 	print,'>> reduce sky background ',obj_id
 	
@@ -28,13 +57,13 @@ pro sky_reduction,obj_id
 
 	bin = mrdfits(sltmak(0)+'.bintabs.fits',1)
 	
+;	https://www2.keck.hawaii.edu/inst/deimos/deimos_detector_data.html	
 	GA = [1.224d0,1.181d0,1.266d0,1.209d0,1.181d0,1.171d0,1.207d0,1.218d0]
 	RO = [2.566d0,2.476d0,2.654d0,2.534d0,2.477d0,2.455d0,2.531d0,2.554d0]
 	B_Gain = GA(B_add)
 	B_Readout = RO(B_add)
 	R_Gain = GA(R_add)
 	R_Readout = RO(R_add)
-;   from https://www2.keck.hawaii.edu/inst/deimos/deimos_detector_data.html	
 
 	path  = './'+obj_id+'/'
 	print,'>>>>>>'+path+'<<<<<<'
@@ -78,14 +107,10 @@ pro sky_reduction,obj_id
 			BF_sky = BF - next_BF
 			RF_sky = RF - next_RF
 		endelse
-		spawn,'rm -rf '+path+'Bf'+string(iexp,format='(I02)')+'_sky.fits'
-		spawn,'rm -rf '+path+'Rf'+string(iexp,format='(I02)')+'_sky.fits'
-		spawn,'rm -rf '+path+'BN'+string(iexp,format='(I02)')+'.fits'
-		spawn,'rm -rf '+path+'RN'+string(iexp,format='(I02)')+'.fits'
-		mwrfits,BF_sky,path+'Bf'+string(iexp,format='(I02)')+'_sky.fits',/silent
-		mwrfits,RF_sky,path+'Rf'+string(iexp,format='(I02)')+'_sky.fits',/silent
-		mwrfits,BN,path+'BN'+string(iexp,format='(I02)')+'.fits',/silent
-		mwrfits,RN,path+'RN'+string(iexp,format='(I02)')+'.fits',/silent
+		mwrfits,BF_sky,path+'Bf'+string(iexp,format='(I02)')+'_sky.fits',/silent,/create
+		mwrfits,RF_sky,path+'Rf'+string(iexp,format='(I02)')+'_sky.fits',/silent,/create
+		mwrfits,BN,path+'BN'+string(iexp,format='(I02)')+'.fits',/silent,/create
+		mwrfits,RN,path+'RN'+string(iexp,format='(I02)')+'.fits',/silent,/create
 
 	endfor
 
